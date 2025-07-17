@@ -2,36 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kelo Dating – Chat</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat - FindLove</title>
+  <style>
+    #messages {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+    }
+    .my-message {
+      background-color: #dcf8c6;
+      text-align: right;
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 15px;
+      max-width: 70%;
+      margin-left: auto;
+    }
+    .their-message {
+      background-color: #fff;
+      text-align: left;
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 15px;
+      max-width: 70%;
+      margin-right: auto;
+      border: 1px solid #ddd;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h2>Kelo Dating Chat</h2>
-    <nav>
-      <a href="dashboard.html">Home</a>
-      <a href="matches.html">Matches</a>
-      <a href="chat.html" class="active">Chat</a>
-      <a href="profile.html">Profile</a>
-      <button onclick="logout()">Logout</button>
-    </nav>
-  </header>
+  <h2>Chat Room</h2>
 
-  <main>
-    <div class="chat-container">
-      <div class="chat-users" id="chatUsers"></div>
-      <div class="chat-box">
-        <div id="chatMessages" class="chat-messages"></div>
-        <div class="chat-input">
-          <input type="text" id="messageInput" placeholder="Type a message..." />
-          <button onclick="sendMessage()">Send</button>
-        </div>
-      </div>
-    </div>
-  </main>
+  <div id="messages"></div>
 
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="chat.js"></script>
+  <input type="text" id="messageInput" placeholder="Type your message..." style="width: 70%; padding: 8px;" />
+  <button id="sendBtn">Send</button>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- Your Firebase config -->
+  <script src="firebase-config.js"></script>
+  <!-- Your chat logic -->
+  <script src="chat.js"></script>
 </body>
 </html>
