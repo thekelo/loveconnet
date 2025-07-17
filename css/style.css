@@ -55,4 +55,51 @@ footer {
   text-align: center;
   color: #777;
 }
+.chat-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.chat-users {
+  flex: 1;
+  border-right: 1px solid #ccc;
+}
+
+.chat-box {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  height: 400px;
+  background: #f9f9f9;
+}
+
+.sent {
+  text-align: right;
+  background-color: #dcf8c6;
+  margin: 5px;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.received {
+  text-align: left;
+  background-color: #ffffff;
+  margin: 5px;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+}
 
