@@ -1,78 +1,76 @@
-import { auth, db, onAuthStateChanged, signOut, doc, getDoc, collection, addDoc, query, orderBy, onSnapshot } from './firebase.js';
+// Import Firebase modules
+import { db, auth } from './firebase.js';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 
-let currentUser;
-let currentChatUserId = null;
+// Elements
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const messagesContainer = document.getElementById("messages");
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
-  }
-  currentUser = user;
-  loadChatUsers();
-});
+// 🔄 Replace with the UID of the person the current user is chatting with
+let chatPartnerUID = "RECEIVER_USER_UID";
 
-async function loadChatUsers() {
-  const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-  const matches = userDoc.data().matches || [];
+// ✅ Send message function
+async function sendMessage(senderId, receiverId, text) {
+  if (!text.trim()) return;
 
-  const chatUsersContainer = document.getElementById('chatUsers');
-  chatUsersContainer.innerHTML = '<h3>Your Matches</h3>';
-
-  for (const matchId of matches) {
-    const matchDoc = await getDoc(doc(db, 'users', matchId));
-    if (matchDoc.exists()) {
-      const userData = matchDoc.data();
-      const button = document.createElement('button');
-      button.textContent = userData.fullName;
-      button.onclick = () => loadChat(matchId, userData.fullName);
-      chatUsersContainer.appendChild(button);
-    }
-  }
-}
-
-function loadChat(userId, userName) {
-  currentChatUserId = userId;
-  document.getElementById('chatMessages').innerHTML = `<p><strong>Chat with ${userName}</strong></p>`;
-
-  const chatRef = collection(db, 'chats');
-  const q = query(chatRef, orderBy('timestamp'));
-
-  onSnapshot(q, (snapshot) => {
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.innerHTML = `<p><strong>Chat with ${userName}</strong></p>`;
-    snapshot.forEach((doc) => {
-      const msg = doc.data();
-      if (
-        (msg.sender === currentUser.uid && msg.receiver === currentChatUserId) ||
-        (msg.sender === currentChatUserId && msg.receiver === currentUser.uid)
-      ) {
-        const div = document.createElement('div');
-        div.className = msg.sender === currentUser.uid ? 'sent' : 'received';
-        div.textContent = msg.text;
-        chatMessages.appendChild(div);
-      }
+  try {
+    await addDoc(collection(db, "messages"), {
+      sender: senderId,
+      receiver: receiverId,
+      text: text,
+      timestamp: serverTimestamp()
     });
 
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    messageInput.value = ""; // Clear input after sending
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+}
+
+// 🎯 Display messages between current user and partner
+function loadChatMessages(currentUserId, chatPartnerUID) {
+  const messagesRef = collection(db, "messages");
+
+  const q = query(
+    messagesRef,
+    where("sender", "in", [currentUserId, chatPartnerUID]),
+    where("receiver", "in", [currentUserId, chatPartnerUID]),
+    orderBy("timestamp", "asc")
+  );
+
+  onSnapshot(q, (snapshot) => {
+    messagesContainer.innerHTML = ""; // Clear messages first
+    snapshot.forEach((doc) => {
+      const msg = doc.data();
+      const isOwnMessage = msg.sender === currentUserId;
+
+      const messageEl = document.createElement("div");
+      messageEl.className = isOwnMessage ? "my-message" : "their-message";
+      messageEl.textContent = msg.text;
+      messagesContainer.appendChild(messageEl);
+    });
+
+    // Scroll to latest message
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   });
 }
 
-window.sendMessage = async function () {
-  const text = document.getElementById('messageInput').value.trim();
-  if (!text || !currentChatUserId) return;
+// 🔐 Wait for Firebase auth to load current user
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    loadChatMessages(user.uid, chatPartnerUID);
 
-  await addDoc(collection(db, 'chats'), {
-    sender: currentUser.uid,
-    receiver: currentChatUserId,
-    text,
-    timestamp: new Date()
-  });
-
-  document.getElementById('messageInput').value = '';
-};
-
-window.logout = async function () {
-  await signOut(auth);
-  window.location.href = 'login.html';
-};
+    sendBtn.addEventListener("click", () => {
+      sendMessage(user.uid, chatPartnerUID, messageInput.value);
+    });
+  }
+});
