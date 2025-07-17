@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – FindLove</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Find Matches ❤️</h1>
+    <nav>
+      <a href="profile.html">My Profile</a> |
+      <a href="matches.html">My Matches</a> |
+      <a href="#" id="logoutBtn">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>People Near You</h2>
+    <div id="usersContainer"></div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 FindLove</p>
+  </footer>
+
+  <script>
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const usersContainer = document.getElementById("usersContainer");
+
+      const currentUserDoc = await db.collection("users").doc(user.uid).get();
+      const currentUserData = currentUserDoc.data();
+
+      db.collection("users").onSnapshot((snapshot) => {
+        usersContainer.innerHTML = "";
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.uid !== user.uid) {
+            const card = document.createElement("div");
+            card.style.border = "1px solid #ccc";
+            card.style.padding = "15px";
+            card.style.marginBottom = "15px";
+            card.style.borderRadius = "10px";
+            card.innerHTML = `
+              <img src="${data.imageUrl}" alt="${data.fullname}" width="100" style="border-radius: 50%;" /><br>
+              <strong>${data.fullname}</strong><br>
+              Gender: ${data.gender}<br>
+              Location: ${data.location}<br><br>
+              <button onclick="likeUser('${data.uid}')">💖 Like</button>
+            `;
+            usersContainer.appendChild(card);
+          }
+        });
+      });
+    });
+
+    async function likeUser(likedUserId) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const likeRef = db.collection("likes").doc(currentUser.uid + "_" + likedUserId);
+      const doc = await likeRef.get();
+      if (!doc.exists) {
+        await likeRef.set({
+          from: currentUser.uid,
+          to: likedUserId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("User liked!");
+      } else {
+        alert("You already liked this user.");
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+</body>
+</html>
