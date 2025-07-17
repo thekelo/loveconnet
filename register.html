@@ -3,47 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register</title>
+  <title>My Profile – FindLove</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="js/firebase.js"></script>
 </head>
 <body>
-  <h2>Register</h2>
-  <input type="email" id="email" placeholder="Email" /><br />
-  <input type="password" id="password" placeholder="Password" /><br />
-  <button onclick="register()">Register</button>
+  <header>
+    <h1>My Profile</h1>
+    <nav>
+      <a href="dashboard.html">Dashboard</a> |
+      <a href="matches.html">My Matches</a> |
+      <a href="#" id="logoutBtn">Logout</a>
+    </nav>
+  </header>
 
-  <script type="module">
-    // 1. Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <main>
+    <div id="profileArea">
+      <img id="profilePic" src="" width="120" style="border-radius: 50%;" /><br><br>
+      <form id="profileForm">
+        <input type="text" id="fullname" placeholder="Full Name" required /><br><br>
+        <input type="text" id="gender" placeholder="Gender" required /><br><br>
+        <input type="text" id="location" placeholder="Location" required /><br><br>
+        <input type="file" id="newImage" accept="image/*" /><br><br>
+        <button type="submit" class="btn">Update Profile</button>
+      </form>
+    </div>
+  </main>
 
-    // 2. Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCyR7m47iJY_9TLgR93pKzNdPV9VFWeVak",
-      authDomain: "findlove-dating-app-5765d.firebaseapp.com",
-      projectId: "findlove-dating-app-5765d",
-      storageBucket: "findlove-dating-app-5765d.firebasestorage.app",
-      messagingSenderId: "109134771821",
-      appId: "1:109134771821:web:a2e75e5c426c8046ecf164"
-    };
+  <footer>
+    <p>&copy; 2025 FindLove</p>
+  </footer>
 
-    // 3. Initialize App & Auth
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  <script>
+    let currentUserId;
 
-    // 4. Register Function
-    window.register = function () {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
 
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          alert("Registered successfully!");
-          console.log(userCredential.user);
-        })
-        .catch((error) => {
-          alert("Error: " + error.message);
-        });
-    };
+      currentUserId = user.uid;
+      const doc = await db.collection("users").doc(user.uid).get();
+      const data = doc.data();
+
+      document.getElementById("fullname").value = data.fullname;
+      document.getElementById("gender").value = data.gender;
+      document.getElementById("location").value = data.location;
+      document.getElementById("profilePic").src = data.imageUrl;
+    });
+
+    const form = document.getElementById("profileForm");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullname = document.getElementById("fullname").value;
+      const gender = document.getElementById("gender").value;
+      const location = document.getElementById("location").value;
+      const newImage = document.getElementById("newImage").files[0];
+
+      let imageUrl = document.getElementById("profilePic").src;
+
+      if (newImage) {
+        const imageRef = storage.ref().child(profiles/${currentUserId});
+        await imageRef.put(newImage);
+        imageUrl = await imageRef.getDownloadURL();
+      }
+
+      await db.collection("users").doc(currentUserId).update({
+        fullname,
+        gender,
+        location,
+        imageUrl
+      });
+
+      alert("Profile updated!");
+      window.location.reload();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
   </script>
 </body>
 </html>
