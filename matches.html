@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Matches – FindLove</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase.js"></script>
+</head>
+<body>
+  <header>
+    <h1>My Matches 💖</h1>
+    <nav>
+      <a href="dashboard.html">Dashboard</a> |
+      <a href="profile.html">My Profile</a> |
+      <a href="#" id="logoutBtn">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="matchesContainer"></div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 FindLove</p>
+  </footer>
+
+  <script>
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const matchesContainer = document.getElementById("matchesContainer");
+
+      // Get all likes sent by current user
+      const likesSentSnap = await db.collection("likes").where("from", "==", user.uid).get();
+      const likedUserIds = likesSentSnap.docs.map(doc => doc.data().to);
+
+      // For each liked user, check if they liked the current user back
+      const matches = [];
+
+      for (let likedUserId of likedUserIds) {
+        const reverseLikeSnap = await db.collection("likes")
+          .where("from", "==", likedUserId)
+          .where("to", "==", user.uid)
+          .get();
+
+        if (!reverseLikeSnap.empty) {
+          matches.push(likedUserId);
+        }
+      }
+
+      if (matches.length === 0) {
+        matchesContainer.innerHTML = "<p>No matches yet. Keep liking! 💘</p>";
+      } else {
+        matchesContainer.innerHTML = "<h2>You matched with:</h2>";
+        for (let matchId of matches) {
+          const doc = await db.collection("users").doc(matchId).get();
+          const data = doc.data();
+
+          const card = document.createElement("div");
+          card.style.border = "1px solid #ccc";
+          card.style.padding = "15px";
+          card.style.marginBottom = "15px";
+          card.style.borderRadius = "10px";
+          card.innerHTML = `
+            <img src="${data.imageUrl}" alt="${data.fullname}" width="100" style="border-radius: 50%;" /><br>
+            <strong>${data.fullname}</strong><br>
+            Gender: ${data.gender}<br>
+            Location: ${data.location}<br><br>
+            <a href="chat.html?uid=${data.uid}" class="btn">💬 Chat</a>
+          `;
+          matchesContainer.appendChild(card);
+        }
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+</body>
+</html>
