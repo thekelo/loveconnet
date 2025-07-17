@@ -1,6 +1,3 @@
-// js/firebase.js
-
-// Replace with your actual config
 const firebaseConfig = {
   apiKey: "AIzaSyCyR7m47iJY_9TLgR93pKzNdPV9VFWeVak",
   authDomain: "findlove-dating-app-5765d.firebaseapp.com",
@@ -9,9 +6,3 @@ const firebaseConfig = {
   messagingSenderId: "109134771821",
   appId: "1:109134771821:web:a2e75e5c426c8046ecf164"
 };
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
